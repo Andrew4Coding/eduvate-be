@@ -1,0 +1,388 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String  @id @default(cuid())
+  name     String?
+  email    String? @unique
+  password String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Student Student[]
+
+  Teacher Teacher[]
+
+  Admin Admin[]
+
+  UserPreferences UserPreferences[]
+
+  UserLog UserLog[]
+
+  @@map("users")
+}
+
+model School {
+  id       String  @id @default(cuid())
+  name     String
+  code     String  @unique
+  address  String?
+  isHidden Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Course  Course[]
+  Student Student[]
+  Teacher Teacher[]
+
+  Admin Admin[]
+
+  @@map("schools")
+}
+
+enum ADMIN_ROLE {
+  SUPER_ADMIN
+  ADMIN
+}
+
+model Admin {
+  id     String     @id @default(cuid())
+  userId String
+  user   User       @relation(fields: [userId], references: [id])
+  role   ADMIN_ROLE @default(ADMIN)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id])
+}
+
+model Student {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Course Course[]
+
+  QuizSubmission QuizSubmission[]
+
+  TaskSubmission TaskSubmission[]
+
+  Attendance Attendance[]
+
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id])
+}
+
+model Teacher {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Course Course[]
+
+  TaskSubmission TaskSubmission[]
+
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id])
+}
+
+model Course {
+  id          String  @id @default(cuid())
+  name        String
+  code        String  @unique
+  description String?
+  isHidden    Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  students Student[]
+  teachers Teacher[]
+
+  CourseSection CourseSection[]
+
+  School School[]
+}
+
+model UserPreferences {
+  id             String  @id @default(cuid())
+  userId         String
+  user           User    @relation(fields: [userId], references: [id])
+  isDisabledMode Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CourseSection {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  isHidden    Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  course   Course @relation(fields: [courseId], references: [id])
+  courseId String
+
+  CourseItem CourseItem[]
+}
+
+model CourseItem {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  isHidden    Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  courseSection   CourseSection @relation(fields: [courseSectionId], references: [id])
+  courseSectionId String
+
+  Material Material[]
+
+  Quiz Quiz[]
+
+  Task Task[]
+
+  AttendanceItem AttendanceItem[]
+}
+
+enum FILE_TYPE {
+  PDF
+  VIDEO
+  AUDIO
+  PPT
+}
+
+model Material {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  isHidden    Boolean   @default(false)
+  fileUrl     String
+  fileType    FILE_TYPE
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  courseItem   CourseItem @relation(fields: [courseItemId], references: [id])
+  courseItemId String
+}
+
+model Quiz {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  isHidden    Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  courseItemId String
+  courseItem   CourseItem @relation(fields: [courseItemId], references: [id])
+
+  QuizQuestion QuizQuestion[]
+
+  QuizSubmission QuizSubmission[]
+
+  QuizSubmissionAnswer QuizSubmissionAnswer[]
+}
+
+enum QUESTION_TYPE {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  SHORT_ANSWER
+  LONG_ANSWER
+}
+
+model QuizQuestion {
+  id            String        @id @default(cuid())
+  question      String
+  answer        String
+  type          QUESTION_TYPE
+  isHidden      Boolean       @default(false)
+  options       String[]
+  explanation   String?
+  correctAnswer String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  quizId String
+  quiz   Quiz   @relation(fields: [quizId], references: [id])
+}
+
+model QuizSubmission {
+  id        String   @id @default(cuid())
+  studentId String
+  quizId    String
+  answers   String[]
+  score     Int
+  isGraded  Boolean  @default(false)
+  isHidden  Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id])
+  quiz    Quiz    @relation(fields: [quizId], references: [id])
+
+  QuizSubmissionAnswer QuizSubmissionAnswer[]
+}
+
+model QuizSubmissionAnswer {
+  id               String @id @default(cuid())
+  quizId           String
+  quizSubmissionId String
+  questionId       String
+  answer           String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  quiz           Quiz           @relation(fields: [quizId], references: [id])
+  quizSubmission QuizSubmission @relation(fields: [quizSubmissionId], references: [id])
+}
+
+model Task {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  isHidden    Boolean @default(false)
+
+  openDate  DateTime? @default(now())
+  dueDate   DateTime?
+  closeDate DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  courseItemId String
+  courseItem   CourseItem @relation(fields: [courseItemId], references: [id])
+
+  TaskAttachment TaskAttachment[]
+
+  TaskSubmission TaskSubmission[]
+}
+
+model TaskAttachment {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  fileUrl     String
+  fileType    FILE_TYPE
+  isHidden    Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  taskId String
+  task   Task   @relation(fields: [taskId], references: [id])
+}
+
+model TaskSubmission {
+  id        String  @id @default(cuid())
+  studentId String
+  taskId    String
+  fileUrl   String
+  isGraded  Boolean @default(false)
+  isHidden  Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  grade    Int?
+  feedback String?
+
+  graderId String?
+  grader   Teacher? @relation(fields: [graderId], references: [id])
+
+  student Student @relation(fields: [studentId], references: [id])
+  task    Task    @relation(fields: [taskId], references: [id])
+
+  TaskSubmissionAttachment TaskSubmissionAttachment[]
+}
+
+model TaskSubmissionAttachment {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  fileUrl     String
+  fileType    FILE_TYPE
+  isHidden    Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  taskSubmissionId String
+  taskSubmission   TaskSubmission @relation(fields: [taskSubmissionId], references: [id])
+}
+
+model AttendanceItem {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  isHidden    Boolean @default(false)
+
+  openDate  DateTime? @default(now())
+  dueDate   DateTime?
+  closeDate DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  courseItemId String
+  courseItem   CourseItem @relation(fields: [courseItemId], references: [id])
+
+  Attendance Attendance[]
+}
+
+model Attendance {
+  id               String  @id @default(cuid())
+  studentId        String
+  attendanceItemId String
+  isPresent        Boolean
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student        Student        @relation(fields: [studentId], references: [id])
+  attendanceItem AttendanceItem @relation(fields: [attendanceItemId], references: [id])
+}
+
+model UserLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  timestamp DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
