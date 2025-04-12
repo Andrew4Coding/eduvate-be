@@ -88,6 +88,7 @@ model Course {
   isHidden      Boolean         @default(false)
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
+  category      COURSE_CATEGORY
   CourseSection CourseSection[]
   School        School[]        @relation("CourseToSchool")
   students      Student[]       @relation("CourseToStudent")
@@ -123,11 +124,12 @@ model CourseItem {
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   courseSectionId String
+  type            String
   AttendanceItem  AttendanceItem[]
   courseSection   CourseSection    @relation(fields: [courseSectionId], references: [id])
-  Material        Material[]
-  Quiz            Quiz[]
-  Task            Task[]
+  Material        Material?
+  Quiz            Quiz?
+  Task            Task?
 }
 
 model Material {
@@ -139,7 +141,7 @@ model Material {
   fileType     FILE_TYPE
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
-  courseItemId String
+  courseItemId String     @unique
   courseItem   CourseItem @relation(fields: [courseItemId], references: [id])
 }
 
@@ -150,7 +152,7 @@ model Quiz {
   isHidden             Boolean                @default(false)
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
-  courseItemId         String
+  courseItemId         String                 @unique
   courseItem           CourseItem             @relation(fields: [courseItemId], references: [id])
   QuizQuestion         QuizQuestion[]
   QuizSubmission       QuizSubmission[]
@@ -209,7 +211,7 @@ model Task {
   closeDate      DateTime?
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
-  courseItemId   String
+  courseItemId   String           @unique
   courseItem     CourseItem       @relation(fields: [courseItemId], references: [id])
   TaskAttachment TaskAttachment[]
   TaskSubmission TaskSubmission[]
@@ -350,4 +352,18 @@ enum QUESTION_TYPE {
   TRUE_FALSE
   SHORT_ANSWER
   LONG_ANSWER
+}
+
+enum COURSE_CATEGORY {
+  SOCIOLOGY
+  GEOGRAPHY
+  ENGLISH
+  MATHEMATICS
+  ECONOMICS
+  HISTORY
+  SCIENCE
+  ART
+  MUSIC
+  PHYSICAL_EDUCATION
+  STATISTICS
 }
