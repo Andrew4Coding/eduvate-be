@@ -16,7 +16,10 @@ export class QuizService {
                         name: data.name,
                         description: data.description,
                     }
-                }
+                },
+                openDate: data.openDate,
+                dueDate: data.dueDate,
+                closeDate: data.closeDate,
             },
         });
     }

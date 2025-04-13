@@ -113,7 +113,7 @@ model CourseSection {
   updatedAt   DateTime     @updatedAt
   courseId    String
   CourseItem  CourseItem[]
-  course      Course       @relation(fields: [courseId], references: [id])
+  course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
 }
 
 model CourseItem {
@@ -147,6 +147,9 @@ model Quiz {
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
   courseItemId         String                 @unique
+  closeDate            DateTime?
+  dueDate              DateTime?
+  openDate             DateTime?              @default(now())
   courseItem           CourseItem             @relation(fields: [courseItemId], references: [id], onDelete: Cascade)
   QuizQuestion         QuizQuestion[]
   QuizSubmission       QuizSubmission[]
