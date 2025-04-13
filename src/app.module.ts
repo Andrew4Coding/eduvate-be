@@ -4,9 +4,11 @@ import { AppService } from './app.service';
 import { CourseModule } from './course/course.module';
 import { UserModule } from './user/user.module';
 import { MaterialModule } from './material/material.module';
+import { QuizModule } from './quiz/quiz.module';
+import { TaskModule } from './task/task.module';
 
 @Module({
-  imports: [CourseModule, UserModule, MaterialModule],
+  imports: [CourseModule, UserModule, MaterialModule, QuizModule, TaskModule],
   controllers: [AppController],
   providers: [AppService],
 })

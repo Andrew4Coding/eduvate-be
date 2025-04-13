@@ -124,9 +124,9 @@ model CourseItem {
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   courseSectionId String
-  type            String
+  type            COURSEITEM_TYPE
   AttendanceItem  AttendanceItem[]
-  courseSection   CourseSection    @relation(fields: [courseSectionId], references: [id])
+  courseSection   CourseSection    @relation(fields: [courseSectionId], references: [id], onDelete: Cascade)
   Material        Material?
   Quiz            Quiz?
   Task            Task?
@@ -134,26 +134,20 @@ model CourseItem {
 
 model Material {
   id           String     @id @default(cuid())
-  name         String
-  description  String?
-  isHidden     Boolean    @default(false)
   fileUrl      String
   fileType     FILE_TYPE
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   courseItemId String     @unique
-  courseItem   CourseItem @relation(fields: [courseItemId], references: [id])
+  courseItem   CourseItem @relation(fields: [courseItemId], references: [id], onDelete: Cascade)
 }
 
 model Quiz {
   id                   String                 @id @default(cuid())
-  name                 String
-  description          String?
-  isHidden             Boolean                @default(false)
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
   courseItemId         String                 @unique
-  courseItem           CourseItem             @relation(fields: [courseItemId], references: [id])
+  courseItem           CourseItem             @relation(fields: [courseItemId], references: [id], onDelete: Cascade)
   QuizQuestion         QuizQuestion[]
   QuizSubmission       QuizSubmission[]
   QuizSubmissionAnswer QuizSubmissionAnswer[]
@@ -203,16 +197,13 @@ model QuizSubmissionAnswer {
 
 model Task {
   id             String           @id @default(cuid())
-  name           String
-  description    String?
-  isHidden       Boolean          @default(false)
   openDate       DateTime?        @default(now())
   dueDate        DateTime?
   closeDate      DateTime?
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   courseItemId   String           @unique
-  courseItem     CourseItem       @relation(fields: [courseItemId], references: [id])
+  courseItem     CourseItem       @relation(fields: [courseItemId], references: [id], onDelete: Cascade)
   TaskAttachment TaskAttachment[]
   TaskSubmission TaskSubmission[]
 }
@@ -366,4 +357,10 @@ enum COURSE_CATEGORY {
   MUSIC
   PHYSICAL_EDUCATION
   STATISTICS
+}
+
+enum COURSEITEM_TYPE {
+  MATERIAL
+  QUIZ
+  TASK
 }

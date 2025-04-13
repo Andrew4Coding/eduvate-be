@@ -100,4 +100,22 @@ export class CourseController {
       data: section,
     });
   }
+
+  @Delete('item/:id')
+  async deleteCourseItem(@Param('id') id: string) {
+    await this.courseService.deleteCourseItem(id);
+    return this.responseUtil.response({
+      code: 200,
+      message: 'Course item deleted successfully',
+    });
+  }
+
+  @Delete('section/:id')
+  async deleteCourseSection(@Param('id') id: string) {
+    await this.courseService.deleteCourseSection(id);
+    return this.responseUtil.response({
+      code: 200,
+      message: 'Course section deleted successfully',
+    });
+  }
 }
