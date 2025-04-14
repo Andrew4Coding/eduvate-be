@@ -139,36 +139,38 @@ model Material {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   courseItemId String     @unique
+  transcripted String?
   courseItem   CourseItem @relation(fields: [courseItemId], references: [id], onDelete: Cascade)
 }
 
 model Quiz {
-  id                   String                 @id @default(cuid())
-  createdAt            DateTime               @default(now())
-  updatedAt            DateTime               @updatedAt
-  courseItemId         String                 @unique
-  closeDate            DateTime?
-  dueDate              DateTime?
-  openDate             DateTime?              @default(now())
-  courseItem           CourseItem             @relation(fields: [courseItemId], references: [id], onDelete: Cascade)
-  QuizQuestion         QuizQuestion[]
-  QuizSubmission       QuizSubmission[]
-  QuizSubmissionAnswer QuizSubmissionAnswer[]
+  id             String           @id @default(cuid())
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  courseItemId   String           @unique
+  closeDate      DateTime?
+  dueDate        DateTime?
+  openDate       DateTime?        @default(now())
+  courseItem     CourseItem       @relation(fields: [courseItemId], references: [id], onDelete: Cascade)
+  QuizQuestion   QuizQuestion[]
+  QuizSubmission QuizSubmission[]
 }
 
 model QuizQuestion {
-  id            String        @id @default(cuid())
-  question      String
-  answer        String
-  type          QUESTION_TYPE
-  isHidden      Boolean       @default(false)
-  options       String[]
-  explanation   String?
-  correctAnswer String
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  quizId        String
-  quiz          Quiz          @relation(fields: [quizId], references: [id])
+  id                   String                 @id @default(cuid())
+  question             String
+  answer               String
+  type                 QUESTION_TYPE
+  isHidden             Boolean                @default(false)
+  options              String[]
+  explanation          String?
+  correctAnswer        String
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  quizId               String
+  quiz                 Quiz                   @relation(fields: [quizId], references: [id])
+  QuizQuestionChoice   QuizQuestionChoice[]
+  QuizSubmissionAnswer QuizSubmissionAnswer[]
 }
 
 model QuizSubmission {
@@ -188,13 +190,12 @@ model QuizSubmission {
 
 model QuizSubmissionAnswer {
   id               String         @id @default(cuid())
-  quizId           String
   quizSubmissionId String
-  questionId       String
   answer           String
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
-  quiz             Quiz           @relation(fields: [quizId], references: [id])
+  quizQuestionId   String
+  QuizQuestion     QuizQuestion   @relation(fields: [quizQuestionId], references: [id])
   quizSubmission   QuizSubmission @relation(fields: [quizSubmissionId], references: [id])
 }
 
@@ -327,6 +328,13 @@ model verification {
   expiresAt  DateTime
   createdAt  DateTime?
   updatedAt  DateTime?
+}
+
+model QuizQuestionChoice {
+  id             String       @id
+  text           String
+  quizQuestionId String
+  QuizQuestion   QuizQuestion @relation(fields: [quizQuestionId], references: [id])
 }
 
 enum ADMIN_ROLE {
