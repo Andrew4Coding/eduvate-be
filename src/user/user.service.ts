@@ -1,21 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RegisterAdminDto, RegisterStudentDto } from './dto/register-user.dto';
+import { ResponseUtil } from 'src/common/utils/response.util';
 
 @Injectable()
 export class UserService {
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(private readonly prisma: PrismaService,
+        private readonly responseUtil: ResponseUtil
+    ) { }
 
 
     async registerStudent(data: RegisterStudentDto) {
         const { schoolCode } = data;
-        
+
         const user = await this.prisma.user.findFirst({
             where: {
                 email: data.email,
             },
         })
-        
+
         if (!user) {
             throw new Error('User not found');
         }
@@ -26,7 +29,10 @@ export class UserService {
             },
         })
         if (!school) {
-            throw new Error('School not found');
+            return this.responseUtil.response({
+                code: 400,
+                message: 'School not found',
+            });
         }
 
         const student = await this.prisma.student.create({
@@ -39,7 +45,7 @@ export class UserService {
         return student;
     }
 
-    async registerTeacher(data: RegisterStudentDto) { 
+    async registerTeacher(data: RegisterStudentDto) {
         const user = await this.prisma.user.findFirst({
             where: {
                 email: data.email,
@@ -47,7 +53,7 @@ export class UserService {
         })
 
         if (!user) {
-            throw new Error('User not found');
+            return ResponseUtil
         }
 
         const school = await this.prisma.school.findFirst({
@@ -56,7 +62,10 @@ export class UserService {
             },
         })
         if (!school) {
-            throw new Error('School not found');
+            return this.responseUtil.response({
+                code: 400,
+                message: 'School not found',
+            });
         }
 
         const teacher = await this.prisma.teacher.create({
