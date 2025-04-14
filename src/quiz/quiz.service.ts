@@ -4,23 +4,24 @@ import { CreateQuizDto } from './quiz.dto';
 
 @Injectable()
 export class QuizService {
-    constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
-    async createQuiz(data: CreateQuizDto) {
-        return await this.prisma.quiz.create({
-            data: {
-                courseItem: {
-                    create: {
-                        courseSectionId: data.courseSectionId,
-                        type: 'QUIZ',
-                        name: data.name,
-                        description: data.description,
-                    }
-                },
-                openDate: data.openDate,
-                dueDate: data.dueDate,
-                closeDate: data.closeDate,
-            },
-        });
-    }
+  async createQuiz(data: CreateQuizDto) {
+    return await this.prisma.quiz.create({
+      data: {
+        courseItem: {
+          create: {
+            courseSectionId: data.courseSectionId,
+            type: 'QUIZ',
+            name: data.name,
+            description: data.description,
+          },
+        },
+        title: data.title,
+        openDate: data.openDate,
+        dueDate: data.dueDate,
+        duration: data.duration,
+      },
+    });
+  }
 }
