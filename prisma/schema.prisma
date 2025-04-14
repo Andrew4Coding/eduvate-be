@@ -17,7 +17,7 @@ model User {
   emailVerified   Boolean
   image           String?
   Admin           Admin[]
-  Student         Student[]
+  Student         Student?
   Teacher         Teacher[]
   UserLog         UserLog[]
   UserPreferences UserPreferences[]
@@ -56,10 +56,10 @@ model Admin {
 
 model Student {
   id             String           @id @default(cuid())
-  userId         String
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   schoolId       String
+  userId         String           @unique
   Attendance     Attendance[]
   QuizSubmission QuizSubmission[]
   school         School           @relation(fields: [schoolId], references: [id])
@@ -139,7 +139,7 @@ model Material {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   courseItemId String     @unique
-  transcripted String?
+  transcripted String
   courseItem   CourseItem @relation(fields: [courseItemId], references: [id], onDelete: Cascade)
 }
 
@@ -148,9 +148,11 @@ model Quiz {
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   courseItemId   String           @unique
-  closeDate      DateTime?
-  dueDate        DateTime?
-  openDate       DateTime?        @default(now())
+  dueDate        DateTime
+  openDate       DateTime         @default(now())
+  description    String?
+  title          String
+  duration       Int
   courseItem     CourseItem       @relation(fields: [courseItemId], references: [id], onDelete: Cascade)
   QuizQuestion   QuizQuestion[]
   QuizSubmission QuizSubmission[]
@@ -160,7 +162,6 @@ model QuizQuestion {
   id                   String                 @id @default(cuid())
   question             String
   answer               String
-  type                 QUESTION_TYPE
   isHidden             Boolean                @default(false)
   options              String[]
   explanation          String?
@@ -347,13 +348,6 @@ enum FILE_TYPE {
   VIDEO
   AUDIO
   PPT
-}
-
-enum QUESTION_TYPE {
-  MULTIPLE_CHOICE
-  TRUE_FALSE
-  SHORT_ANSWER
-  LONG_ANSWER
 }
 
 enum COURSE_CATEGORY {
