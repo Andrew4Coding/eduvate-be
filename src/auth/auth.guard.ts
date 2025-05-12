@@ -37,3 +37,16 @@ export class AuthGuard implements CanActivate {
         }
     }
 }
+
+export async function validateRole(
+    user: userData,
+    roles: ('student' | 'teacher' | 'admin')[],
+): Promise<boolean> {
+    const isValidRole = roles.includes(user.role);
+
+    if (!isValidRole) {
+        throw new UnauthorizedException('You do not have permission to access this resource');
+    }
+
+    return isValidRole;
+}

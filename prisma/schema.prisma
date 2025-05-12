@@ -16,7 +16,6 @@ model User {
   updatedAt       DateTime          @updatedAt
   emailVerified   Boolean
   image           String?
-  Admin           Admin[]
   Student         Student?
   Teacher         Teacher[]
   UserLog         UserLog[]
@@ -27,42 +26,13 @@ model User {
   @@map("users")
 }
 
-model School {
-  id        String    @id @default(cuid())
-  name      String
-  code      String    @unique
-  address   String?
-  isHidden  Boolean   @default(false)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  Admin     Admin[]
-  Student   Student[]
-  Teacher   Teacher[]
-  Course    Course[]  @relation("CourseToSchool")
-
-  @@map("schools")
-}
-
-model Admin {
-  id        String     @id @default(cuid())
-  userId    String
-  role      ADMIN_ROLE @default(ADMIN)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  schoolId  String
-  school    School     @relation(fields: [schoolId], references: [id])
-  user      User       @relation(fields: [userId], references: [id])
-}
-
 model Student {
   id             String           @id @default(cuid())
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
-  schoolId       String
   userId         String           @unique
   Attendance     Attendance[]
   QuizSubmission QuizSubmission[]
-  school         School           @relation(fields: [schoolId], references: [id])
   user           User             @relation(fields: [userId], references: [id])
   TaskSubmission TaskSubmission[]
   Course         Course[]         @relation("CourseToStudent")
@@ -73,9 +43,7 @@ model Teacher {
   userId         String
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
-  schoolId       String
   TaskSubmission TaskSubmission[]
-  school         School           @relation(fields: [schoolId], references: [id])
   user           User             @relation(fields: [userId], references: [id])
   Course         Course[]         @relation("CourseToTeacher")
 }
@@ -90,7 +58,6 @@ model Course {
   updatedAt     DateTime        @updatedAt
   category      COURSE_CATEGORY
   CourseSection CourseSection[]
-  School        School[]        @relation("CourseToSchool")
   students      Student[]       @relation("CourseToStudent")
   teachers      Teacher[]       @relation("CourseToTeacher")
 }

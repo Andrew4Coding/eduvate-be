@@ -26,3 +26,7 @@ export class UpdateCourseSectionDto {
     name?: string;
     description?: string;
 }
+
+export class EnrollCourseDto {
+    courseCode: string;
+}

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AddCourseSectionDto, CreateCourseDto, UpdateCourseDto, UpdateCourseSectionDto } from './dto/create-course.dto';
 
@@ -12,6 +12,99 @@ export class CourseService {
                 category: true,
             }
         });
+    }
+
+    async enrollCourse(courseCode: string, email: string) { 
+        const course = await this.prisma.course.findUnique({
+            where: {
+                code: courseCode,
+            },
+        });
+        if (!course) {
+            throw new NotFoundException('Course not found');
+        }
+
+        const student = await this.prisma.student.findFirst({
+            where: {
+                user: {
+                    email: email,
+                }
+            },
+            include: {
+                Course: {
+                    where: {
+                        id: course.id,
+                    },
+                },
+            }
+        });
+
+        if (!student) {
+            throw new NotFoundException('Student not found');
+        }
+
+        if (student.Course.length > 0) {
+            throw new BadRequestException('Student already enrolled in this course');
+        }
+
+        await this.prisma.student.update({
+            where: {
+                id: student.id,
+            },
+            data: {
+                Course: {
+                    connect: {
+                        id: course.id,
+                    },
+                },
+            },
+        })
+
+        return student;
+    }
+
+    async unenrollCourse(courseCode: string, email: string) {
+        const course = await this.prisma.course.findUnique({
+            where: {
+                code: courseCode,
+            },
+        });
+        if (!course) {
+            throw new NotFoundException('Course not found');
+        }
+        const student = await this.prisma.student.findFirst({
+            where: {
+                user: {
+                    email: email,
+                }
+            },
+            include: {
+                Course: {
+                    where: {
+                        id: course.id,
+                    },
+                },
+            }
+        });
+        if (!student) {
+            throw new NotFoundException('Student not found');
+        }
+        if (student.Course.length === 0) {
+            throw new BadRequestException('Student not enrolled in this course');
+        }
+        await this.prisma.student.update({
+            where: {
+                id: student.id,
+            },
+            data: {
+                Course: {
+                    disconnect: {
+                        id: course.id,
+                    },
+                },
+            },
+        });
+        return student;
     }
 
     async getAllCoursesWithStudents() { 
@@ -30,9 +123,27 @@ export class CourseService {
         });
     }
 
-    async createCourse(data: CreateCourseDto) {
+    async createCourse(data: CreateCourseDto, teacherEmail: string) {
+        const teacher = await this.prisma.teacher.findFirst({
+            where: {
+                user: {
+                    email: teacherEmail,
+                }
+            },
+        });
+        if (!teacher) {
+            throw new NotFoundException('Teacher not found');
+        }
+
         return await this.prisma.course.create({
-            data,
+            data: {
+                ...data,
+                teachers: {
+                    connect: {
+                        id: teacher.id,
+                    }
+                }
+            },
         });
     }
 

@@ -1,6 +1,6 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { ResponseUtil } from 'src/common/utils/response.util';
-import { RegisterAdminDto, RegisterStudentDto } from './dto/register-user.dto';
+import { RegisterStudentDto } from './dto/register-user.dto';
 import { UserService } from './user.service';
 
 @Controller('user')
@@ -28,18 +28,6 @@ export class UserController {
       message: 'Teacher registered successfully',
     }, {
       data: await this.userService.registerTeacher(registerStudentDto),
-    })
-  }
-
-  @Post('register-admin')
-  async registerAdmin(
-    @Body() registerAdminDto: RegisterAdminDto,
-  ) {
-    return this.responseUtil.response({
-      code: 200,
-      message: 'Admin registered successfully',
-    }, {
-      data: await this.userService.registerAdmin(registerAdminDto),
     })
   }
 }
