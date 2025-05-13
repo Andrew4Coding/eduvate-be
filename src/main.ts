@@ -15,7 +15,7 @@ async function bootstrap() {
 
   const responseUtil = app.get(ResponseUtil);
 
-  app.useGlobalFilters(new HttpExceptionFilter(responseUtil));
+  // app.useGlobalFilters(new HttpExceptionFilter(responseUtil));
 
 
   await app.listen(process.env.PORT ?? 8000);

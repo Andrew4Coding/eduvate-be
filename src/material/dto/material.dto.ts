@@ -9,6 +9,7 @@ export class CreateMaterialDto {
     fileType: FILE_TYPE;
 }
 
+
 export class UpdateMaterialDto {
     name?: string;
     transcripted?: string;
