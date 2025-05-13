@@ -151,6 +151,9 @@ export class CourseService {
         return await this.prisma.course.update({
             where: { id },
             data,
+        }).catch((error) => { 
+            console.log(error);
+            
         });
     }
 
