@@ -7,302 +7,300 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id              String            @id @default(cuid())
-  name            String?
-  email           String?           @unique
-  password        String?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  emailVerified   Boolean
-  image           String?
-  Student         Student?
-  Teacher         Teacher[]
-  UserLog         UserLog[]
-  UserPreferences UserPreferences[]
-  account         account[]
-  session         session[]
-
-  @@map("users")
-}
-
-model Student {
-  id             String           @id @default(cuid())
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  userId         String           @unique
-  Attendance     Attendance[]
-  QuizSubmission QuizSubmission[]
-  user           User             @relation(fields: [userId], references: [id])
-  TaskSubmission TaskSubmission[]
-  Course         Course[]         @relation("CourseToStudent")
-}
-
-model Teacher {
-  id             String           @id @default(cuid())
-  userId         String
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  TaskSubmission TaskSubmission[]
-  user           User             @relation(fields: [userId], references: [id])
-  Course         Course[]         @relation("CourseToTeacher")
-}
-
-model Course {
-  id            String          @id @default(cuid())
-  name          String
-  code          String          @unique
-  description   String?
-  isHidden      Boolean         @default(false)
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  category      COURSE_CATEGORY
-  CourseSection CourseSection[]
-  students      Student[]       @relation("CourseToStudent")
-  teachers      Teacher[]       @relation("CourseToTeacher")
-}
-
-model UserPreferences {
-  id             String   @id @default(cuid())
-  userId         String
-  isDisabledMode Boolean  @default(false)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  user           User     @relation(fields: [userId], references: [id])
-}
-
-model CourseSection {
-  id          String       @id @default(cuid())
-  name        String
-  description String?
-  isHidden    Boolean      @default(false)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  courseId    String
-  CourseItem  CourseItem[]
-  course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
-}
-
-model CourseItem {
-  id              String           @id @default(cuid())
-  name            String
-  description     String?
-  isHidden        Boolean          @default(false)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  courseSectionId String
-  type            COURSEITEM_TYPE
-  AttendanceItem  AttendanceItem[]
-  courseSection   CourseSection    @relation(fields: [courseSectionId], references: [id], onDelete: Cascade)
-  Material        Material?
-  Quiz            Quiz?
-  Task            Task?
-}
-
-model Material {
-  id           String     @id @default(cuid())
-  fileUrl      String
-  fileType     FILE_TYPE
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  courseItemId String     @unique
-  transcripted String
-  courseItem   CourseItem @relation(fields: [courseItemId], references: [id], onDelete: Cascade)
-}
-
-model Quiz {
-  id             String           @id @default(cuid())
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  courseItemId   String           @unique
-  dueDate        DateTime
-  openDate       DateTime         @default(now())
-  description    String?
-  title          String
-  duration       Int
-  courseItem     CourseItem       @relation(fields: [courseItemId], references: [id], onDelete: Cascade)
-  QuizQuestion   QuizQuestion[]
-  QuizSubmission QuizSubmission[]
-}
-
-model QuizQuestion {
-  id                   String                 @id @default(cuid())
-  question             String
-  answer               String
-  isHidden             Boolean                @default(false)
-  options              String[]
-  explanation          String?
-  correctAnswer        String
-  createdAt            DateTime               @default(now())
-  updatedAt            DateTime               @updatedAt
-  quizId               String
-  quiz                 Quiz                   @relation(fields: [quizId], references: [id])
-  QuizQuestionChoice   QuizQuestionChoice[]
-  QuizSubmissionAnswer QuizSubmissionAnswer[]
-}
-
-model QuizSubmission {
-  id                   String                 @id @default(cuid())
-  studentId            String
-  quizId               String
-  answers              String[]
-  score                Int
-  isGraded             Boolean                @default(false)
-  isHidden             Boolean                @default(false)
-  createdAt            DateTime               @default(now())
-  updatedAt            DateTime               @updatedAt
-  quiz                 Quiz                   @relation(fields: [quizId], references: [id])
-  student              Student                @relation(fields: [studentId], references: [id])
-  QuizSubmissionAnswer QuizSubmissionAnswer[]
-}
-
-model QuizSubmissionAnswer {
-  id               String         @id @default(cuid())
-  quizSubmissionId String
-  answer           String
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  quizQuestionId   String
-  QuizQuestion     QuizQuestion   @relation(fields: [quizQuestionId], references: [id])
-  quizSubmission   QuizSubmission @relation(fields: [quizSubmissionId], references: [id])
-}
-
-model Task {
-  id             String           @id @default(cuid())
-  openDate       DateTime?        @default(now())
-  dueDate        DateTime?
-  closeDate      DateTime?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  courseItemId   String           @unique
-  courseItem     CourseItem       @relation(fields: [courseItemId], references: [id], onDelete: Cascade)
-  TaskAttachment TaskAttachment[]
-  TaskSubmission TaskSubmission[]
-}
-
-model TaskAttachment {
-  id          String    @id @default(cuid())
-  name        String
-  description String?
-  fileUrl     String
-  fileType    FILE_TYPE
-  isHidden    Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  taskId      String
-  task        Task      @relation(fields: [taskId], references: [id])
-}
-
-model TaskSubmission {
-  id                       String                     @id @default(cuid())
-  studentId                String
-  taskId                   String
-  fileUrl                  String
-  isGraded                 Boolean                    @default(false)
-  isHidden                 Boolean                    @default(false)
-  createdAt                DateTime                   @default(now())
-  updatedAt                DateTime                   @updatedAt
-  grade                    Int?
-  feedback                 String?
-  graderId                 String?
-  grader                   Teacher?                   @relation(fields: [graderId], references: [id])
-  student                  Student                    @relation(fields: [studentId], references: [id])
-  task                     Task                       @relation(fields: [taskId], references: [id])
-  TaskSubmissionAttachment TaskSubmissionAttachment[]
-}
-
-model TaskSubmissionAttachment {
-  id               String         @id @default(cuid())
-  name             String
-  description      String?
-  fileUrl          String
-  fileType         FILE_TYPE
-  isHidden         Boolean        @default(false)
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  taskSubmissionId String
-  taskSubmission   TaskSubmission @relation(fields: [taskSubmissionId], references: [id])
-}
-
-model AttendanceItem {
-  id           String       @id @default(cuid())
-  name         String
-  description  String?
-  isHidden     Boolean      @default(false)
-  openDate     DateTime?    @default(now())
-  dueDate      DateTime?
-  closeDate    DateTime?
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  courseItemId String
-  Attendance   Attendance[]
-  courseItem   CourseItem   @relation(fields: [courseItemId], references: [id])
-}
-
-model Attendance {
-  id               String         @id @default(cuid())
-  studentId        String
-  attendanceItemId String
-  isPresent        Boolean
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  attendanceItem   AttendanceItem @relation(fields: [attendanceItemId], references: [id])
-  student          Student        @relation(fields: [studentId], references: [id])
-}
-
-model UserLog {
-  id        String   @id @default(cuid())
-  userId    String
-  action    String
-  timestamp DateTime @default(now())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id])
-}
-
 model account {
-  id                    String    @id
-  accountId             String
-  providerId            String
-  userId                String
-  accessToken           String?
-  refreshToken          String?
-  idToken               String?
-  accessTokenExpiresAt  DateTime?
-  refreshTokenExpiresAt DateTime?
-  scope                 String?
-  password              String?
-  createdAt             DateTime
-  updatedAt             DateTime
-  users                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                       String    @id
+  scope                    String?
+  password                 String?
+  access_token             String?
+  access_token_expires_at  DateTime?
+  account_id               String
+  created_at               DateTime  @default(now())
+  id_token                 String?
+  provider_id              String
+  refresh_token            String?
+  refresh_token_expires_at DateTime?
+  updated_at               DateTime
+  user_id                  String
+  user                     user      @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model session {
-  id        String   @id
-  expiresAt DateTime
-  token     String   @unique
-  createdAt DateTime
-  updatedAt DateTime
-  ipAddress String?
-  userAgent String?
-  userId    String
-  users     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String   @id
+  token      String   @unique
+  created_at DateTime @default(now())
+  expires_at DateTime
+  ip_address String?
+  updated_at DateTime
+  user_agent String?
+  user_id    String
+  user       user     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model verification {
   id         String    @id
   identifier String
   value      String
-  expiresAt  DateTime
-  createdAt  DateTime?
-  updatedAt  DateTime?
+  created_at DateTime? @default(now())
+  expires_at DateTime
+  updated_at DateTime?
 }
 
-model QuizQuestionChoice {
+model attendance {
+  id                 String          @id
+  student_id         String
+  attendance_item_id String
+  is_present         Boolean
+  created_at         DateTime        @default(now())
+  updated_at         DateTime
+  attendance_item    attendance_item @relation(fields: [attendance_item_id], references: [id])
+  student            student         @relation(fields: [student_id], references: [id])
+}
+
+model attendance_item {
   id             String       @id
-  text           String
-  quizQuestionId String
-  QuizQuestion   QuizQuestion @relation(fields: [quizQuestionId], references: [id])
+  name           String
+  description    String?
+  is_hidden      Boolean      @default(false)
+  open_date      DateTime?    @default(now())
+  due_date       DateTime?
+  close_date     DateTime?
+  created_at     DateTime     @default(now())
+  updated_at     DateTime
+  course_item_id String
+  attendance     attendance[]
+  course_item    course_item  @relation(fields: [course_item_id], references: [id])
+}
+
+model course {
+  id             String           @id
+  name           String
+  code           String           @unique
+  description    String?
+  is_hidden      Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime
+  category       COURSE_CATEGORY
+  course_section course_section[]
+  students       student[]        @relation("CourseToStudent")
+  teachers       teacher[]        @relation("CourseToTeacher")
+}
+
+model course_item {
+  id                String            @id
+  name              String
+  description       String?
+  is_hidden         Boolean           @default(false)
+  created_at        DateTime          @default(now())
+  updated_at        DateTime
+  course_section_id String
+  type              COURSEITEM_TYPE
+  attendance_item   attendance_item[]
+  course_section    course_section    @relation(fields: [course_section_id], references: [id], onDelete: Cascade)
+  material          material?
+  quiz              quiz?
+  task              task?
+}
+
+model course_section {
+  id          String        @id
+  name        String
+  description String?
+  is_hidden   Boolean       @default(false)
+  created_at  DateTime      @default(now())
+  updated_at  DateTime
+  course_id   String
+  course_item course_item[]
+  course      course        @relation(fields: [course_id], references: [id], onDelete: Cascade)
+}
+
+model material {
+  id             String      @id
+  file_url       String
+  file_type      FILE_TYPE
+  transcripted   String
+  created_at     DateTime    @default(now())
+  updated_at     DateTime
+  course_item_id String      @unique
+  course_item    course_item @relation(fields: [course_item_id], references: [id], onDelete: Cascade)
+}
+
+model quiz {
+  id              String            @id
+  title           String
+  description     String?
+  open_date       DateTime          @default(now())
+  duration        Int
+  due_date        DateTime
+  created_at      DateTime          @default(now())
+  updated_at      DateTime
+  course_item_id  String            @unique
+  course_item     course_item       @relation(fields: [course_item_id], references: [id], onDelete: Cascade)
+  quiz_question   quiz_question[]
+  quiz_submission quiz_submission[]
+}
+
+model quiz_question {
+  id                      String                    @id
+  question                String
+  answer                  String
+  is_hidden               Boolean                   @default(false)
+  options                 String[]
+  explanation             String?
+  correct_answer          String
+  created_at              DateTime                  @default(now())
+  updated_at              DateTime
+  quiz_id                 String
+  quiz                    quiz                      @relation(fields: [quiz_id], references: [id])
+  quiz_question_choice    quiz_question_choice[]
+  quiz_submission_answers quiz_submission_answers[]
+}
+
+model quiz_question_choice {
+  id               String        @id
+  text             String
+  quiz_question_id String
+  quiz_question    quiz_question @relation(fields: [quiz_question_id], references: [id])
+}
+
+model quiz_submission {
+  id                      String                    @id
+  student_id              String
+  quiz_id                 String
+  answers                 String[]
+  score                   Int
+  is_graded               Boolean                   @default(false)
+  is_hidden               Boolean                   @default(false)
+  created_at              DateTime                  @default(now())
+  updated_at              DateTime
+  quiz                    quiz                      @relation(fields: [quiz_id], references: [id])
+  student                 student                   @relation(fields: [student_id], references: [id])
+  quiz_submission_answers quiz_submission_answers[]
+}
+
+model quiz_submission_answers {
+  id                 String          @id
+  quiz_submission_id String
+  quiz_question_id   String
+  answer             String
+  created_at         DateTime        @default(now())
+  updated_at         DateTime
+  quiz_question      quiz_question   @relation(fields: [quiz_question_id], references: [id])
+  quiz_submission    quiz_submission @relation(fields: [quiz_submission_id], references: [id])
+}
+
+model student {
+  id              String            @id
+  user_id         String            @unique
+  created_at      DateTime          @default(now())
+  updated_at      DateTime
+  attendance      attendance[]
+  quiz_submission quiz_submission[]
+  user            user              @relation(fields: [user_id], references: [id])
+  task_submission task_submission[]
+  Course          course[]          @relation("CourseToStudent")
+}
+
+model task {
+  id              String            @id
+  open_date       DateTime?         @default(now())
+  due_date        DateTime?
+  close_date      DateTime?
+  created_at      DateTime          @default(now())
+  updated_at      DateTime
+  courseItemId    String            @unique
+  course_item     course_item       @relation(fields: [courseItemId], references: [id], onDelete: Cascade)
+  task_attachment task_attachment[]
+  task_submission task_submission[]
+}
+
+model task_attachment {
+  id          String    @id
+  name        String
+  description String?
+  file_url    String
+  file_type   FILE_TYPE
+  is_hidden   Boolean   @default(false)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime
+  task_id     String
+  task        task      @relation(fields: [task_id], references: [id])
+}
+
+model task_submission {
+  id                         String                       @id
+  student_id                 String
+  task_id                    String
+  file_url                   String
+  is_graded                  Boolean                      @default(false)
+  is_hidden                  Boolean                      @default(false)
+  created_at                 DateTime                     @default(now())
+  updated_at                 DateTime
+  grade                      Int?
+  feedback                   String?
+  grader_id                  String?
+  teacher                    teacher?                     @relation(fields: [grader_id], references: [id])
+  student                    student                      @relation(fields: [student_id], references: [id])
+  task                       task                         @relation(fields: [task_id], references: [id])
+  task_submission_attachment task_submission_attachment[]
+}
+
+model task_submission_attachment {
+  id                 String          @id
+  name               String
+  description        String?
+  file_url           String
+  file_type          FILE_TYPE
+  is_hidden          Boolean         @default(false)
+  created_at         DateTime        @default(now())
+  updated_at         DateTime
+  task_submission_id String
+  task_submission    task_submission @relation(fields: [task_submission_id], references: [id])
+}
+
+model teacher {
+  id              String            @id
+  user_id         String            @unique
+  created_at      DateTime          @default(now())
+  updated_at      DateTime
+  task_submission task_submission[]
+  user            user              @relation(fields: [user_id], references: [id])
+  Course          course[]          @relation("CourseToTeacher")
+}
+
+model user {
+  id              String           @id
+  name            String?
+  email           String?          @unique
+  password        String?
+  created_at      DateTime         @default(now())
+  updated_at      DateTime
+  email_verified  Boolean          @default(false)
+  image           String?
+  account         account[]
+  session         session[]
+  student         student?
+  teacher         teacher?
+  user_log        user_log[]
+  user_preference user_preference?
+}
+
+model user_log {
+  id         String   @id
+  user_id    String
+  action     String
+  timestamp  DateTime @default(now())
+  created_at DateTime @default(now())
+  updated_at DateTime
+  user       user     @relation(fields: [user_id], references: [id])
+}
+
+model user_preference {
+  id               String   @id
+  user_id          String   @unique
+  is_disabled_mode Boolean  @default(false)
+  created_at       DateTime @default(now())
+  updated_at       DateTime
+  user             user     @relation(fields: [user_id], references: [id])
 }
 
 enum ADMIN_ROLE {
