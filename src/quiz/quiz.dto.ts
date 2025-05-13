@@ -7,3 +7,9 @@ export class CreateQuizDto {
   dueDate: Date;
   duration: number;
 }
+
+export class SubmitQuizDto {
+  quizId: string;
+  questionSeq: string[];
+  answers: (string | null)[];
+}
