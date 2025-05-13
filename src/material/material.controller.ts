@@ -11,12 +11,10 @@ export class MaterialController {
   
   @Post('create')
   async createMaterial(@Body() data: CreateMaterialDto) {
-    const result = await this.materialService.createMaterial(data);
+    await this.materialService.queueCreateMaterial(data);
     return this.responseUtil.response({
-      message: 'Material created successfully',
+      message: 'Material Queued successfully',
       code: 200,
-    }, {
-      data: result,
     });
   }
 
