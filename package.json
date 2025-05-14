@@ -80,5 +80,10 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "msgpackr-extract"
+    ]
   }
 }
