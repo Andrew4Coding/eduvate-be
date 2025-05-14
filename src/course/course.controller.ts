@@ -90,6 +90,13 @@ export class CourseController {
         message: 'Course not found',
       });
     }
+
+    return this.responseUtil.response({
+      code: 200,
+      message: 'Course updated successfully',
+    }, {
+      data: course,
+    });
   }
 
   @Delete(':id')
