@@ -1,3 +1,11 @@
+export class QuizQuestionDto {
+  id?: string;
+  question: string;
+  options: string[];
+  correctAnswer: string;
+  explanation?: string;
+}
+
 export class CreateQuizDto {
   name: string;
   description: string;
@@ -6,6 +14,17 @@ export class CreateQuizDto {
   openDate: Date;
   dueDate: Date;
   duration: number;
+  courseId: string;
+  questions: QuizQuestionDto[];
+}
+
+export class UpdateQuizDto {
+  title: string;
+  description: string;
+  openDate: Date;
+  dueDate: Date;
+  duration: number;
+  questions: QuizQuestionDto[];
 }
 
 export class SubmitQuizDto {

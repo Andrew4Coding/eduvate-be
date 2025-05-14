@@ -1,5 +1,5 @@
 import { Body, Controller, Logger, Post, UseGuards, Req, Get, Param, Patch } from '@nestjs/common';
-import { CreateQuizDto, SubmitQuizDto, SaveAnswerDto } from './quiz.dto';
+import { CreateQuizDto, SubmitQuizDto, SaveAnswerDto, UpdateQuizDto } from './quiz.dto';
 import { QuizService } from './quiz.service';
 import { ResponseUtil } from 'src/common/utils/response.util';
 import { AuthGuard } from '../auth/auth.guard';
@@ -23,6 +23,17 @@ export class QuizController {
     }, {
       data: await this.quizService.createQuiz(data),
     })
+  }
+
+  @UseGuards(AuthGuard)
+  @Patch(':id')
+  async updateQuiz(@Param('id') id: string, @Body() data: UpdateQuizDto) {
+    return this.responseUtil.response({
+      code: 200,
+      message: 'Quiz updated successfully',
+    }, {
+      data: await this.quizService.updateQuiz(id, data),
+    });
   }
 
   @UseGuards(AuthGuard)

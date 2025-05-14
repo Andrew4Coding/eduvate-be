@@ -1,6 +1,6 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateQuizDto, SubmitQuizDto, SaveAnswerDto } from './quiz.dto';
+import { CreateQuizDto, SubmitQuizDto, SaveAnswerDto, UpdateQuizDto } from './quiz.dto';
 
 @Injectable()
 export class QuizService {
@@ -9,22 +9,193 @@ export class QuizService {
   constructor(private readonly prisma: PrismaService) { }
 
   async createQuiz(data: CreateQuizDto) {
-    return await this.prisma.quiz.create({
-      data: {
-        courseItem: {
-          create: {
-            courseSectionId: data.courseSectionId,
-            type: 'QUIZ',
-            name: data.name,
-            description: data.description,
+    try {
+      this.logger.debug(`Creating quiz with data: ${JSON.stringify(data)}`);
+      
+      return await this.prisma.$transaction(async (tx) => {
+        try {
+          // First create or get the course section
+          let courseSection;
+          if (data.courseSectionId) {
+            courseSection = await tx.courseSection.findUnique({
+              where: { id: data.courseSectionId }
+            });
+            if (!courseSection) {
+              throw new NotFoundException('Course section not found');
+            }
+          } else if (data.courseId) {
+            // Create a new course section if courseId is provided
+            courseSection = await tx.courseSection.create({
+              data: {
+                name: `${data.title} Section`,
+                description: `Section for ${data.title}`,
+                courseId: data.courseId
+              }
+            });
+          } else {
+            throw new NotFoundException('Either courseSectionId or courseId must be provided');
+          }
+
+          const quiz = await tx.quiz.create({
+            data: {
+              courseItem: {
+                create: {
+                  name: data.title,
+                  courseSectionId: courseSection.id,
+                  type: 'QUIZ',
+                  description: data.description,
+                }
+              },
+              title: data.title,
+              openDate: data.openDate || new Date(),
+              dueDate: data.dueDate,
+              duration: data.duration,
+            }
+          });
+
+          this.logger.debug(`Created quiz with ID: ${quiz.id}`);
+
+          // Create questions
+          if (data.questions && data.questions.length > 0) {
+            const questions = await Promise.all(
+              data.questions.map(async (question) => {
+                try {
+                  const createdQuestion = await tx.quizQuestion.create({
+                    data: {
+                      question: question.question,
+                      options: question.options,
+                      answer: question.correctAnswer,
+                      correctAnswer: question.correctAnswer,
+                      explanation: question.explanation,
+                      quizId: quiz.id,
+                      isHidden: false,
+                      QuizQuestionChoice: {
+                        create: question.options.map(option => ({
+                          text: option
+                        }))
+                      }
+                    },
+                  });
+                  this.logger.debug(`Created question with ID: ${createdQuestion.id}`);
+                  return createdQuestion;
+                } catch (error) {
+                  this.logger.error(`Error creating question: ${error.message}`, error.stack);
+                  throw new InternalServerErrorException(`Failed to create question: ${error.message}`);
+                }
+              })
+            );
+            this.logger.debug(`Successfully created ${questions.length} questions for quiz ${quiz.id}`);
+          }
+
+          return quiz;
+        } catch (error) {
+          this.logger.error(`Error in quiz creation transaction: ${error.message}`, error.stack);
+          throw new InternalServerErrorException(`Failed to create quiz: ${error.message}`);
+        }
+      });
+    } catch (error) {
+      this.logger.error(`Error creating quiz: ${error.message}`, error.stack);
+      throw new InternalServerErrorException(`Failed to create quiz: ${error.message}`);
+    }
+  }
+
+  async updateQuiz(id: string, data: UpdateQuizDto) {
+    try {
+      this.logger.debug(`Updating quiz ${id} with data: ${JSON.stringify(data)}`);
+
+      const quiz = await this.prisma.quiz.findUnique({
+        where: { id },
+        include: {
+          QuizQuestion: {
+            include: {
+              QuizQuestionChoice: true
+            }
           },
         },
-        title: data.title,
-        openDate: data.openDate,
-        dueDate: data.dueDate,
-        duration: data.duration,
-      },
-    });
+      });
+
+      if (!quiz) {
+        this.logger.warn(`Quiz not found with ID: ${id}`);
+        throw new NotFoundException('Quiz not found');
+      }
+
+      return await this.prisma.$transaction(async (tx) => {
+        try {
+          // Update quiz details
+          const updatedQuiz = await tx.quiz.update({
+            where: { id },
+            data: {
+              title: data.title,
+              openDate: data.openDate,
+              dueDate: data.dueDate,
+              duration: data.duration,
+              courseItem: {
+                update: {
+                  description: data.description,
+                },
+              },
+            },
+          });
+
+          this.logger.debug(`Updated quiz details for ID: ${id}`);
+
+          // Delete existing question choices first
+          for (const question of quiz.QuizQuestion) {
+            await tx.quizQuestionChoice.deleteMany({
+              where: { quizQuestionId: question.id }
+            });
+          }
+
+          // Then delete the questions
+          await tx.quizQuestion.deleteMany({
+            where: { quizId: id },
+          });
+
+          this.logger.debug(`Deleted existing questions and choices for quiz ${id}`);
+
+          // Create new questions with choices
+          const questions = await Promise.all(
+            data.questions.map(async (question) => {
+              try {
+                const createdQuestion = await tx.quizQuestion.create({
+                  data: {
+                    question: question.question,
+                    options: question.options,
+                    answer: question.correctAnswer,
+                    correctAnswer: question.correctAnswer,
+                    explanation: question.explanation,
+                    quizId: id,
+                    isHidden: false,
+                    QuizQuestionChoice: {
+                      create: question.options.map(option => ({
+                        text: option
+                      }))
+                    }
+                  },
+                });
+                this.logger.debug(`Created new question with ID: ${createdQuestion.id}`);
+                return createdQuestion;
+              } catch (error) {
+                this.logger.error(`Error creating question: ${error.message}`, error.stack);
+                throw new InternalServerErrorException(`Failed to create question: ${error.message}`);
+              }
+            })
+          );
+
+          this.logger.debug(`Successfully created ${questions.length} questions for quiz ${id}`);
+          return updatedQuiz;
+        } catch (error) {
+          this.logger.error(`Error in quiz update transaction: ${error.message}`, error.stack);
+          throw new InternalServerErrorException(`Failed to update quiz: ${error.message}`);
+        }
+      });
+    } catch (error) {
+      this.logger.error(`Error updating quiz: ${error.message}`, error.stack);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(`Failed to update quiz: ${error.message}`);
+    }
   }
 
   async submitQuiz(userId: string, data: SubmitQuizDto) {
