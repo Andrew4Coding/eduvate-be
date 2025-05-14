@@ -114,10 +114,12 @@ model CourseItem {
 model Material {
   id           String     @id @default(cuid()) @map("id")
   fileUrl      String     @map("file_url")
-  fileType     FILE_TYPE  @map("file_type")
+  audioUrl     String?    @map("audio_url")
   transcripted String     @map("transcripted")
+
   createdAt    DateTime   @default(now()) @map("created_at")
   updatedAt    DateTime   @updatedAt @map("updated_at")
+  
   courseItemId String     @unique @map("course_item_id")
   courseItem   CourseItem @relation(fields: [courseItemId], references: [id], onDelete: Cascade)
 

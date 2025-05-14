@@ -1,10 +1,9 @@
 import { Body, Controller, Logger, Post, UseGuards, Req, Get, Param, Patch } from '@nestjs/common';
-import { CreateQuizDto, SubmitQuizDto, SaveAnswerDto, UpdateQuizDto } from './quiz.dto';
-import { QuizService } from './quiz.service';
 import { ResponseUtil } from 'src/common/utils/response.util';
 import { AuthGuard } from '../auth/auth.guard';
 import { CurrentUser } from '../auth/user.decorator';
-import { Request } from 'express';
+import { CreateQuizDto, SaveAnswerDto, SubmitQuizDto, UpdateQuizDto } from './quiz.dto';
+import { QuizService } from './quiz.service';
 
 @Controller('quiz')
 export class QuizController {

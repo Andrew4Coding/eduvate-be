@@ -1,8 +1,8 @@
+import { InjectQueue } from '@nestjs/bull';
 import { Injectable } from '@nestjs/common';
+import { Queue } from 'bull';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateMaterialDto, UpdateMaterialDto } from './dto/material.dto';
-import { Queue } from 'bull';
-import { InjectQueue } from '@nestjs/bull';
 
 @Injectable()
 export class MaterialService {
@@ -26,7 +26,6 @@ export class MaterialService {
                     }
                 },
                 fileUrl: data.fileUrl,
-                fileType: data.fileType,
             },
         });
     }

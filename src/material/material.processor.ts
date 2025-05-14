@@ -41,7 +41,6 @@ export class MaterialProcessor {
         const chatData = await chatResponse.json();
         const responseText = chatData.choices[0].message.content;
 
-
         const newMaterial = await this.prisma.material.create({
             data: {
                 courseItem: {
@@ -54,8 +53,10 @@ export class MaterialProcessor {
                 },
                 transcripted: responseText,
                 fileUrl: data.fileUrl,
-                fileType: data.fileType,
             },
+        }).catch((error) => { 
+            console.error("Error creating material:", error);
+            throw new Error("Failed to create material");
         });
 
         this.getAndUploadAudio(responseText, newMaterial.id)
@@ -101,7 +102,7 @@ export class MaterialProcessor {
         // Update database
         await this.prisma.material.update({
             where: { id: materialId },
-            data: { fileUrl: audioUrl },
+            data: { audioUrl },
         });
 
         return audioUrl;
