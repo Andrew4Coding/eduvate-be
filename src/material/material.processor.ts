@@ -54,16 +54,21 @@ export class MaterialProcessor {
                 },
                 transcripted: responseText,
                 fileUrl: data.fileUrl,
-                fileType: data.fileType,
             },
         });
+        console.log(newMaterial);
+        
 
         this.getAndUploadAudio(responseText, newMaterial.id)
+        
+
 
         return newMaterial;
     }
 
     async getAndUploadAudio(text: string, materialId: string) {
+        console.log(text);
+        
         const response = await fetch("https://api.elevenlabs.io/v1/text-to-speech/3AwU3nHsI4YWeBJbz6yn?output_format=mp3_44100_128", {
             method: "POST",
             headers: {
@@ -101,7 +106,7 @@ export class MaterialProcessor {
         // Update database
         await this.prisma.material.update({
             where: { id: materialId },
-            data: { fileUrl: audioUrl },
+            data: { audioUrl },
         });
 
         return audioUrl;
