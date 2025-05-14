@@ -41,7 +41,6 @@ export class MaterialProcessor {
         const chatData = await chatResponse.json();
         const responseText = chatData.choices[0].message.content;
 
-
         const newMaterial = await this.prisma.material.create({
             data: {
                 courseItem: {
@@ -55,20 +54,17 @@ export class MaterialProcessor {
                 transcripted: responseText,
                 fileUrl: data.fileUrl,
             },
+        }).catch((error) => { 
+            console.error("Error creating material:", error);
+            throw new Error("Failed to create material");
         });
-        console.log(newMaterial);
-        
 
         this.getAndUploadAudio(responseText, newMaterial.id)
-        
-
 
         return newMaterial;
     }
 
     async getAndUploadAudio(text: string, materialId: string) {
-        console.log(text);
-        
         const response = await fetch("https://api.elevenlabs.io/v1/text-to-speech/3AwU3nHsI4YWeBJbz6yn?output_format=mp3_44100_128", {
             method: "POST",
             headers: {
