@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateQuizDto, SubmitQuizDto } from './quiz.dto';
+import { CreateQuizDto, SubmitQuizDto, SaveAnswerDto } from './quiz.dto';
 
 @Injectable()
 export class QuizService {
@@ -129,4 +129,113 @@ export class QuizService {
 
     return updatedSubmission;
   }
+
+  async saveAnswer(saveAnswerDto: SaveAnswerDto, userId: string) {
+    const { quizId, quizAttemptId, questionId, answer } = saveAnswerDto;
+
+    const student = await this.prisma.student.findUnique({
+      where: { userId },
+    });
+
+    if (!student) {
+      throw new NotFoundException('Student not found');
+    }
+
+    let submissionId = quizAttemptId;
+
+    if (!submissionId) {
+      const existingSubmission = await this.prisma.quizSubmission.findFirst({
+        where: {
+          quizId: quizId,
+          studentId: student.id,
+          isGraded: false, // Only consider active, non-graded attempts
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+      if (existingSubmission) {
+        submissionId = existingSubmission.id;
+      } else {
+        const newSubmission = await this.prisma.quizSubmission.create({
+          data: {
+            quizId: quizId,
+            studentId: student.id,
+            score: 0, // Initialize score
+            isGraded: false,
+            answers: [], // Initialize answers array
+          },
+        });
+        submissionId = newSubmission.id;
+      }
+    }
+
+    if (!submissionId) {
+      this.logger.error('Could not find or create a quiz submission attempt.');
+      throw new NotFoundException('Quiz submission attempt not found.');
+    }
+
+    // Check for an existing answer for this question in this submission
+    const existingAnswer = await this.prisma.quizSubmissionAnswer.findFirst({
+      where: {
+        quizSubmissionId: submissionId,
+        quizQuestionId: questionId,
+      },
+    });
+
+    if (existingAnswer) {
+      return this.prisma.quizSubmissionAnswer.update({
+        where: {
+          id: existingAnswer.id,
+        },
+        data: {
+          answer: answer,
+        },
+      });
+    } else {
+      return this.prisma.quizSubmissionAnswer.create({
+        data: {
+          quizSubmissionId: submissionId,
+          quizQuestionId: questionId,
+          answer: answer,
+        },
+      });
+    }
+  }
+
+  async getQuiz(quizId: string, userId: string) { // Added userId to potentially filter submissions
+    const student = await this.prisma.student.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+
+    if (!student) {
+      throw new NotFoundException('Student not found to retrieve quiz progress.');
+    }
+
+    const quiz = await this.prisma.quiz.findUnique({
+      where: { id: quizId },
+      include: {
+        QuizQuestion: {
+          include: {
+            QuizQuestionChoice: true, // Corrected from QuizQuestionOption
+          },
+        },
+        QuizSubmission: { // Optionally include student's submission
+          where: { studentId: student.id },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          include: {
+            QuizSubmissionAnswer: true,
+          }
+        },
+      },
+    });
+
+    if (!quiz) {
+      throw new NotFoundException(`Quiz with ID "${quizId}" not found`);
+    }
+    return quiz;
+  }
 }
+

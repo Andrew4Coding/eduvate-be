@@ -6,17 +6,14 @@ import { ResponseUtil } from './common/utils/response.util';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.setGlobalPrefix('api');
-
-
-  app.enableCors({
+ app.enableCors({
     origin: process.env.CORS_ORIGIN ?? 'http://localhost:3000',
     credentials: true,
   });
 
   const responseUtil = app.get(ResponseUtil);
 
-  // app.useGlobalFilters(new HttpExceptionFilter(responseUtil));
-
+  app.useGlobalFilters(new HttpExceptionFilter(responseUtil));
 
   await app.listen(process.env.PORT ?? 8000);
 }

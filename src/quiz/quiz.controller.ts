@@ -1,5 +1,5 @@
-import { Body, Controller, Logger, Post, UseGuards, Req } from '@nestjs/common';
-import { CreateQuizDto, SubmitQuizDto } from './quiz.dto';
+import { Body, Controller, Logger, Post, UseGuards, Req, Get, Param, Patch } from '@nestjs/common';
+import { CreateQuizDto, SubmitQuizDto, SaveAnswerDto } from './quiz.dto';
 import { QuizService } from './quiz.service';
 import { ResponseUtil } from 'src/common/utils/response.util';
 import { AuthGuard } from '../auth/auth.guard';
@@ -14,8 +14,9 @@ export class QuizController {
     private readonly responseUtil: ResponseUtil
   ) { }
 
-  @Post('create')
-  async createQuiz(@Body() data: CreateQuizDto) {
+  @UseGuards(AuthGuard)
+  @Post()
+  async createQuiz(@CurrentUser() user: { id: string }, @Body() data: CreateQuizDto) {
     return this.responseUtil.response({
       code: 201,
       message: 'Quiz created successfully',
@@ -26,25 +27,19 @@ export class QuizController {
 
   @UseGuards(AuthGuard)
   @Post('submit')
-  async submitQuiz(@CurrentUser() user: { id: string }, @Body() data: SubmitQuizDto, @Req() req: Request) {
-    this.logger.log(`SubmitQuiz called by user: ${user?.id}`);
-    this.logger.log(`Request Content-Type header: ${req.headers['content-type']}`);
-    this.logger.log(`Received data via @Body(): ${JSON.stringify(data)}`);
-    this.logger.log(`Raw req.body from Express: ${JSON.stringify(req.body)}`);
+  async submitQuiz(@Body() submitQuizDto: SubmitQuizDto, @Req() req) {
+    return this.quizService.submitQuiz(req.user.id, submitQuizDto);
+  }
 
-    if (!user || !user.id) {
-      this.logger.error('User not authenticated or user ID not found in submitQuiz');
-      throw new Error('User not authenticated or user ID not found');
-    }
-    if (data === undefined) {
-        this.logger.error('Data from @Body() is undefined in submitQuiz');
-    }
+  @UseGuards(AuthGuard)
+  @Post('answer')
+  async saveAnswer(@Body() saveAnswerDto: SaveAnswerDto, @Req() req) {
+    return this.quizService.saveAnswer(saveAnswerDto, req.user.id);
+  }
 
-    return this.responseUtil.response({
-        code: 200,
-        message: 'Quiz submitted successfully',
-    }, {
-        data: await this.quizService.submitQuiz(user.id, data),
-    })
+  @UseGuards(AuthGuard)
+  @Get(':id')
+  async getQuiz(@Param('id') id: string, @Req() req) {
+    return this.quizService.getQuiz(id, req.user.id);
   }
 }

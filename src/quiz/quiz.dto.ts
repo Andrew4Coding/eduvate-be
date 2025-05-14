@@ -11,5 +11,13 @@ export class CreateQuizDto {
 export class SubmitQuizDto {
   quizId: string;
   questionSeq: string[];
-  answers: (string | null)[];
+  answers: string[];
+  quizAttemptId?: string;
+}
+
+export class SaveAnswerDto {
+  quizId: string;
+  quizAttemptId?: string;
+  questionId: string;
+  answer: string;
 }
